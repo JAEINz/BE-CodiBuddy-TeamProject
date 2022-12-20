@@ -1,77 +1,152 @@
-import { Router } from 'express';
-import is from '@sindresorhus/is';
+import { Router } from "express";
 // 폴더에서 import하면, 자동으로 폴더의 index.js에서 가져옴
-import passport from 'passport';
-import { loginRequired } from '../middleware';
-import jwt from 'jsonwebtoken';
-import { userService } from '../services';
+import { loginRequired } from "../middlewares";
+import { userService } from "../service";
+
 const userRouter = Router();
 
-// 회원 가입
-userRouter.post('/users/register', async (req, res, next) => {
-    try {
-      const { user_id, pw, nickname, email, introduce, profile_image } = req.body;
-      const info = { user_id, pw, nickname, email, introduce, profile_image };
-      const user = await userService.addUser(info);
-      res.status(201).json(user);
-    } catch (err) {
-      next(err);
-    }
-  });
-  
-
-
-  // 로그인 api
-userRouter.post('/uers/login', async (req, res, next) => {
+// 회원가입 api (아래는 /register이지만, 실제로는 /api/user/register로 요청해야 함.)
+userRouter.post("/user/register", async (req, res, next) => {
   try {
-      // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
-      if (is.emptyObject(req.body)) {
-          throw new Error(
-              'headers의 Content-Type을 application/json으로 설정해주세요',
-          );
-      }
-      passport.authenticate(
-          'local',
-          { session: false },
-          (error, user, info) => {
-              // 성공적으로 유저가 있어야 유저 객체가 생기고,
-              //유저 인증 실패시 유저는 자동으로 false;
+    // Content-Type: application/json 설정을 안 한 경우, 에러를 만들도록 함.
+    // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
+    if (is.emptyObject(req.body)) {
+      throw new Error(
+        "headers의 Content-Type을 application/json으로 설정해주세요"
+      );
+    }
 
-              if (error || !user) {
-                  //인증 성공을 해야 유저 객체가 생겨서 JOI로 검증하기 어려움...
-                  // passport 인증 실패 or 유저가 없으면 error
-                  res.status(400).json({
-                      result: 'error',
-                      reason: info.message,
-                  });
-                  return; // throw로 여러개를 시도해 보았는데, throw로는 에러 해결이 잘 안됨.
-              }
-              req.login(user, { session: false }, (loginError) => {
-                  // login을 하면
-                  if (loginError) {
-                      res.status(400).send(loginError);
-                      return;
-                  }
-                  const secretKey =
-                      process.env.JWT_SECRET_KEY || 'secret-key'; // login 성공시 key값을 써서 토큰 생성
-                  const token = jwt.sign(
-                      { userId: user._id },
-                      secretKey,
-                      {
-                          expiresIn: '7d',
-                      },
-                  );
-                  res.status(200).json({
-                      token,
-                      userId: user._id,
-                  });
-              });
-          },
-      )(req, res);
+    // req (request)의 body 에서 데이터 가져오기
+    const fullName = req.body.fullName;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    // 위 데이터를 유저 db에 추가하기
+    const newUser = await userService.addUser({
+      fullName,
+      email,
+      password,
+    });
+    // 추가된 유저의 db 데이터를 프론트에 다시 보내줌
+    // 물론 프론트에서 안 쓸 수도 있지만, 편의상 일단 보내 줌
+    res.status(201).json(newUser);
   } catch (error) {
-      next(error);
+    next(error);
   }
 });
+
+// 로그인 api (아래는 /login 이지만, 실제로는 /api/login로 요청해야 함.)
+userRouter.post("/login", async function (req, res, next) {
+  try {
+    // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
+    if (is.emptyObject(req.body)) {
+      throw new Error(
+        "headers의 Content-Type을 application/json으로 설정해주세요"
+      );
+    }
+
+    // req (request) 에서 데이터 가져오기
+    const email = req.body.email;
+    const password = req.body.password;
+
+    // 로그인 진행 (로그인 성공 시 jwt 토큰을 프론트에 보내 줌)
+    const userToken = await userService.getUserToken({ email, password });
+
+    // jwt 토큰을 프론트에 보냄 (jwt 토큰은, 문자열임)
+    res.status(200).json(userToken);
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// 회원 본인 정보 조회
+userRouter.get("/user", loginRequired, async function (req, res, next) {
+  try {
+    const userId = req.currentUserId;
+    const currentUserInfo = await userService.getUserData(userId);
+
+    res.status(200).json(currentUserInfo);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 회원 정보 수정
+// (예를 들어 /api/users/abc12345 로 요청하면 req.params.userId는 'abc12345' 문자열로 됨)
+userRouter.patch("/users/:userId", loginRequired, async (req, res, next) => {
+  try {
+    // content-type 을 application/json 로 프론트에서
+    // 설정 안 하고 요청하면, body가 비어 있게 됨.
+    if (is.emptyObject(req.body)) {
+      throw new Error(
+        "headers의 Content-Type을 application/json으로 설정해주세요"
+      );
+    }
+    // params로부터 id를 가져옴
+    const userId = req.params.userId;
+
+    // body data 로부터 업데이트할 사용자 정보를 추출함.
+    const fullName = req.body.fullName;
+    const password = req.body.password;
+    const address1 = req.body.address1;
+    const phoneNumber = req.body.phoneNumber;
+    const role = req.body.role;
+
+    // // body data로부터, 확인용으로 사용할 현재 비밀번호를 추출함.
+    // const currentPassword = req.body.currentPassword;
+
+    // // currentPassword 없을 시, 진행 불가
+    // if (!currentPassword) {
+    //  throw new Error("정보를 변경하려면, 현재의 비밀번호가 필요합니다.");
+    // }
+
+    const userInfoRequired = { userId };
+
+    // 위 데이터가 undefined가 아니라면, 즉, 프론트에서 업데이트를 위해
+    // 보내주었다면, 업데이트용 객체에 삽입함.
+    const toUpdate = {
+      ...(fullName && { fullName }),
+      ...(password && { password }),
+      ...(address1 && { address1 }),
+      ...(phoneNumber && { phoneNumber }),
+      ...(role && { role }),
+    };
+
+    //사용자 정보를 업데이트함.
+    const updatedUserInfo = await userService.setUser(
+      userInfoRequired,
+      toUpdate
+    );
+
+    // 업데이트 이후의 유저 데이터를 프론트에 보내 줌
+    res.status(200).json(updatedUserInfo);
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+//회원탈퇴
+userRouter.delete(
+  "/users/delete/:userId",
+  loginRequired,
+  async function (req, res, next) {
+    try {
+      // params로부터 id를 가져옴
+      const userId = req.params.userId;
+
+      const deleteResult = await userService.deleteUserData(userId);
+
+      res.status(200).json(deleteResult);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 
 
 export { userRouter };
