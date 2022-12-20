@@ -43,8 +43,8 @@ studyRouter.get("/", async (req,res,next)=> {
 })
 
 //내 스터디 전체리스트만 가져오기 (loginrequired)
-studyRouter.get("/mystudy", loginRequired, async (req,res,next)=> {
-// studyRouter.get("/study", async (req,res,next)=> {
+// studyRouter.get("/mystudy", loginRequired, async (req,res,next)=> {
+studyRouter.get("/mystudy", async (req,res,next)=> {
     try{
         const userId = req.currentUserId;
         const myStudyList = await studyService.studyService.getMyStudy(userId);
