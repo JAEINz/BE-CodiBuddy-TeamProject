@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 
-module.exports = class Like extends Sequelize.Model {
+module.exports = class Recruit extends Sequelize.Model {
     static init(sequelize) {
       return super.init({
         user_id: {
