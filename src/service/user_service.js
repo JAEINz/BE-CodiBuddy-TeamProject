@@ -15,7 +15,7 @@ class UserService {
   async addUser(userInfo) {
     const { user_id, pw, nickname, email, introduce } = userInfo;
     const emailResult = await this.User.findOne({
-      where: { email },
+      where: { email:email },
     });
     if (emailResult) {
       throw new Error('중복된 이메일입니다.');
