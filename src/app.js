@@ -4,6 +4,7 @@ const { studyRouter, userRouter } = require('./routers')
 const path = require('path');
 const morgan = require('morgan');
 
+
 const { sequelize } = require('./db');
 
 const app = express();
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/studies', studyRouter);
-app.use('/api', userRouter);
+app.use('/api/users', userRouter);
 
 
 module.exports = { app }

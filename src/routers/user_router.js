@@ -148,5 +148,5 @@ userRouter.delete(
 );
 
 
-
-export { userRouter };
+module.exports = userRouter;
+//export { userRouter };
