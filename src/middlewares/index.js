@@ -1,1 +1,4 @@
-export * from "./login_required";
+const loginRequired = require("./login_required");
+
+
+module.exports = { loginRequired };

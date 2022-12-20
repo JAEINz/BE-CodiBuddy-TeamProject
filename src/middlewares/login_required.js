@@ -1,4 +1,5 @@
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
+
 
 function loginRequired(req, res, next) {
   // request 헤더로부터 authorization bearer 토큰을 받음.
@@ -39,4 +40,4 @@ function loginRequired(req, res, next) {
   }
 }
 
-export { loginRequired };
+module.exports = { loginRequired };
