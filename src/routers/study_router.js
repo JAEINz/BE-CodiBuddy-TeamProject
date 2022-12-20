@@ -4,7 +4,7 @@ const studyRouter = express.Router();
 const { studyService, Recruit, Like } = require("../service");
 
 //스터디 생성
-studyRouter.post("/register", async (req, res, next) => {
+studyRouter.post("register", async (req, res, next) => {
   try {
     const start_at = req.body.start_at;
     const end_at = req.body.end_at;
