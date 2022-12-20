@@ -1,12 +1,14 @@
-import { Router } from "express";
+//import { Router } from "express";
+const { Router } = require("express");
 // 폴더에서 import하면, 자동으로 폴더의 index.js에서 가져옴
-import { loginRequired } from "../middlewares";
-import { userService } from "../service";
-
+//import { loginRequired } from "../middlewares";
+const { loginRequired } = require("../middlewares");
+//import { userService } from "../service";
+const { userService } = require("../service");
 const userRouter = Router();
 
-// 회원가입 api (아래는 /register이지만, 실제로는 /api/user/register로 요청해야 함.)
-userRouter.post("/user/register", async (req, res, next) => {
+// 회원가입 api
+userRouter.post("/register", async (req, res, next) => {
   try {
     // Content-Type: application/json 설정을 안 한 경우, 에러를 만들도록 함.
     // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
@@ -17,15 +19,19 @@ userRouter.post("/user/register", async (req, res, next) => {
     }
 
     // req (request)의 body 에서 데이터 가져오기
-    const fullName = req.body.fullName;
+    const user_id = req.body.user_id;
+    const pw = req.body.pw;
+    const nickname = req.body.nickname;
     const email = req.body.email;
-    const password = req.body.password;
+    const introduce = req.body.introduce;
 
     // 위 데이터를 유저 db에 추가하기
     const newUser = await userService.addUser({
-      fullName,
+      user_id,
+      pw,
+      nickname,
       email,
-      password,
+      introduce
     });
     // 추가된 유저의 db 데이터를 프론트에 다시 보내줌
     // 물론 프론트에서 안 쓸 수도 있지만, 편의상 일단 보내 줌
@@ -35,7 +41,7 @@ userRouter.post("/user/register", async (req, res, next) => {
   }
 });
 
-// 로그인 api (아래는 /login 이지만, 실제로는 /api/login로 요청해야 함.)
+// 로그인 api
 userRouter.post("/login", async function (req, res, next) {
   try {
     // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
@@ -46,11 +52,11 @@ userRouter.post("/login", async function (req, res, next) {
     }
 
     // req (request) 에서 데이터 가져오기
-    const email = req.body.email;
-    const password = req.body.password;
+    const user_id = req.body.user_id;
+    const pw = req.body.pw;
 
     // 로그인 진행 (로그인 성공 시 jwt 토큰을 프론트에 보내 줌)
-    const userToken = await userService.getUserToken({ email, password });
+    const userToken = await userService.getUserToken({ user_id, pw });
 
     // jwt 토큰을 프론트에 보냄 (jwt 토큰은, 문자열임)
     res.status(200).json(userToken);
@@ -63,8 +69,8 @@ userRouter.post("/login", async function (req, res, next) {
 // 회원 본인 정보 조회
 userRouter.get("/user", loginRequired, async function (req, res, next) {
   try {
-    const userId = req.currentUserId;
-    const currentUserInfo = await userService.getUserData(userId);
+    const Id = req.currentUserId;
+    const currentUserInfo = await userService.getUserData(Id);
 
     res.status(200).json(currentUserInfo);
   } catch (error) {
@@ -72,9 +78,15 @@ userRouter.get("/user", loginRequired, async function (req, res, next) {
   }
 });
 
+
+
+
+
+
+//수정해야됨!!!!!!
 // 회원 정보 수정
 // (예를 들어 /api/users/abc12345 로 요청하면 req.params.userId는 'abc12345' 문자열로 됨)
-userRouter.patch("/users/:userId", loginRequired, async (req, res, next) => {
+userRouter.patch("/users/:id", loginRequired, async (req, res, next) => {
   try {
     // content-type 을 application/json 로 프론트에서
     // 설정 안 하고 요청하면, body가 비어 있게 됨.
@@ -84,14 +96,15 @@ userRouter.patch("/users/:userId", loginRequired, async (req, res, next) => {
       );
     }
     // params로부터 id를 가져옴
-    const userId = req.params.userId;
+    const Id = req.params.Id;
 
     // body data 로부터 업데이트할 사용자 정보를 추출함.
-    const fullName = req.body.fullName;
-    const password = req.body.password;
-    const address1 = req.body.address1;
-    const phoneNumber = req.body.phoneNumber;
-    const role = req.body.role;
+    const user_id = req.body.user_id;
+    const pw = req.body.pw;
+    const nickname = req.body.nickname;
+    const email = req.body.email;
+    const introduce = req.body.introduce;
+    const profile_image = req.body.profile_image;
 
     // // body data로부터, 확인용으로 사용할 현재 비밀번호를 추출함.
     // const currentPassword = req.body.currentPassword;
@@ -101,16 +114,17 @@ userRouter.patch("/users/:userId", loginRequired, async (req, res, next) => {
     //  throw new Error("정보를 변경하려면, 현재의 비밀번호가 필요합니다.");
     // }
 
-    const userInfoRequired = { userId };
+    const userInfoRequired = { Id };
 
     // 위 데이터가 undefined가 아니라면, 즉, 프론트에서 업데이트를 위해
     // 보내주었다면, 업데이트용 객체에 삽입함.
     const toUpdate = {
-      ...(fullName && { fullName }),
-      ...(password && { password }),
-      ...(address1 && { address1 }),
-      ...(phoneNumber && { phoneNumber }),
-      ...(role && { role }),
+      ...(user_id && { user_id }),
+      ...(pw && { pw }),
+      ...(nickname && { nickname }),
+      ...(email && { email }),
+      ...(introduce && { introduce }),
+      ...(profile_image && { profile_image }),
     };
 
     //사용자 정보를 업데이트함.
@@ -131,14 +145,14 @@ userRouter.patch("/users/:userId", loginRequired, async (req, res, next) => {
 
 //회원탈퇴
 userRouter.delete(
-  "/users/delete/:userId",
+  "/delete/:id",
   loginRequired,
   async function (req, res, next) {
     try {
       // params로부터 id를 가져옴
-      const userId = req.params.userId;
+      const Id = req.params.Id;
 
-      const deleteResult = await userService.deleteUserData(userId);
+      const deleteResult = await userService.deleteUserData(Id);
 
       res.status(200).json(deleteResult);
     } catch (error) {
