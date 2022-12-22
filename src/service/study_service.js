@@ -23,7 +23,11 @@ class StudyService {
   }
 
   async getAllStudy() {
-    const findAllStudy = await this.Study.findAll({});
+    const findAllStudy = await this.Study.findAll({
+        where:{
+            id:2
+        }
+    });
 
     return findAllStudy;
   }
@@ -34,7 +38,7 @@ class StudyService {
     const getOneStudy = await this.Study.findOne({
       where: {
         id: Number(studyId),
-      },
+      }
     });
     console.log(getOneStudy);
     return getOneStudy;
