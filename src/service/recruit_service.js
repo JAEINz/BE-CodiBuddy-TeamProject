@@ -1,10 +1,8 @@
 const { Recruit } = require("../db/models");
 
 class RecruitService {
-  constructor(Recruit_model, recruit_model, like_model) {
-    this.Study = Recruit_model;
+  constructor( recruit_model ) {
     this.Recruit = recruit_model;
-    this.Like = like_model;
   }
 
   async addRecruit(userId, studyId) {
@@ -46,6 +44,4 @@ class RecruitService {
   }
 }
 
-const recruitService = new RecruitService(Recruit);
-
-module.exports = { recruitService };
+module.exports = new RecruitService(Recruit);

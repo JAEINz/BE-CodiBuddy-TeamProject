@@ -1,26 +1,30 @@
 const express = require("express");
 const studyRouter = express.Router();
 
-const { studyService, recruitService } = require("../service");
+const { studyService, recruitService, studyTagService } = require("../service");
 
-//스터디 생성 (완료)
-studyRouter.post("/register", async (req, res, next) => {
+//스터디 생성 (완료)<recruit, study, study_tag 생성>
+studyRouter.post("/", async (req, res, next) => {
   try {
     const userId = 1;
-    const newStudy = await studyService.studyService.addStudy(req.body);
+    const studyData = req.body.study;
+    const tag = req.body.tag;
+    const newStudy = await studyService.addStudy(studyData);
     const studyId = newStudy.dataValues.id;
-    await recruitService.recruitService.addRecruit(userId, studyId);
+    await recruitService.addRecruit(userId, studyId);
+    await studyTagService.addStudyTag(tag, studyId);
+    const studyTag = await studyTagService.getFromStudy(studyId)
 
-    res.status(201).json(newStudy);
+    res.status(201).json({"study":newStudy,studyTag});
   } catch (error) {
     next(error);
   }
 });
 
-//모든 스터디 불러오기 (완료)
+//모든 스터디 불러오기(태그별 가능) (완료)<study, study_tag>
 studyRouter.get("/", async (req, res, next) => {
   try {
-    const allStudyList = await studyService.studyService.getAllStudy();
+    const allStudyList = await studyService.getAllStudy(req.query);
     res.status(200).json(allStudyList);
   } catch (error) {
     next(error);
@@ -34,7 +38,7 @@ studyRouter.get("/mystudy/attend", async (req, res, next) => {
     // const userId = req.currentUserId;
     const userId = 1;
     const myAttendingStudyList =
-      await studyService.studyService.getMyAttendingStudy(userId);
+      await studyService.getMyAttendingStudy(userId);
     res.status(200).json(myAttendingStudyList);
   } catch (error) {
     next(error);
@@ -47,30 +51,30 @@ studyRouter.get("/mystudy/expire", async (req, res, next) => {
     // const userId = req.currentUserId;
     const userId = 1;
     const myExpiredStudyList =
-      await studyService.studyService.getMyExpiredStudy(userId);
+      await studyService.getMyExpiredStudy(userId);
     res.status(200).json(myExpiredStudyList);
   } catch (error) {
     next(error);
   }
 });
 
-//태그별 스터디 불러오기
+//태그별 스터디 불러오기 (태그리스트를 어떻게 불러올까요!)
 studyRouter.get("/tag", async (req, res, next) => {
   try {
-    const tag = [];
-    const tagForStudy = studyService.studyService.getStudyFromTag(tag);
+    const tag = []
+    const tagForStudy = await studyService.getStudyFromTag(tag);
     res.status(200).json(tagForStudy);
   } catch (error) {
     next(error);
   }
 });
 
-//왜 안되지...
+
 //스터디 상세 보기
 studyRouter.get("/:study_id", async (req, res, next) => {
   try {
     const studyId = req.params.study_id;
-    const studyDetail = studyService.studyService.getStudyDetail(studyId);
+    const studyDetail = await studyService.getStudyDetail(studyId);
     res.status(200).json(studyDetail);
   } catch (error) {
     next(error);
@@ -83,7 +87,7 @@ studyRouter.patch("/:study_id", async (req, res, next) => {
     const userId = req.currentUserId;
     const studyId = req.params.study_id;
     const updateData = req.body;
-    const updateStudy = studyService.studyService.patchMyStudy(
+    const updateStudy = await studyService.patchMyStudy(
       userId,
       studyId,
       updateData
@@ -101,8 +105,8 @@ studyRouter.delete("/:study_id", async (req, res, next) => {
     const userId = 1;
     const studyId = req.params.study_id;
     //리쿠르트 삭제
-    await recruitService.recruitService.deleteMyRecruit(userId, studyId);
-    const deleteStudy = await studyService.studyService.deleteMyStudy(studyId);
+    await recruitService.deleteMyRecruit(userId, studyId);
+    const deleteStudy = await studyService.deleteMyStudy(studyId);
 
     res.status(200).json(deleteStudy);
   } catch (error) {

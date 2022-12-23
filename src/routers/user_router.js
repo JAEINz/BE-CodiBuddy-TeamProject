@@ -23,71 +23,40 @@ userRouter.post("/register", async (req, res, next) => {
       email,
       introduce,
     });
- 
+
     res.status(201).json(newUser);
   } catch (error) {
     next(error);
   }
 });
 
-// // 로그인
-// userRouter.post("/login", async function (req, res, next) {
-//   try {
-//     // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
-//     if (is.emptyObject(req.body)) {
-//       throw new Error(
-//         "headers의 Content-Type을 application/json으로 설정해주세요"
-//       );
-//     }
 
-//     // req (request) 에서 데이터 가져오기
-//     const user_id = req.body.user_id;
-//     const pw = req.body.pw;
 
-//     // 로그인 진행 (로그인 성공 시 jwt 토큰을 프론트에 보내 줌)
-//     const userToken = await userService.getUserToken({ user_id, pw });
 
-//     // jwt 토큰을 프론트에 보냄 (jwt 토큰은, 문자열임)
-//     res.status(200).json(userToken);
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+// 로그인
+userRouter.post("/login", async (req, res, next) => {
+  try {
+    // application/json 설정을 프론트에서 안 하면, body가 비어 있게 됨.
+
+    // req (request) 에서 데이터 가져오기
+    const user_id = req.body.user_id;
+    const pw = req.body.pw;
+
+    // 로그인 진행 (로그인 성공 시 jwt 토큰을 프론트에 보내 줌)
+    const userToken = await userService.userService.getUserToken({ user_id, pw });
+
+    // jwt 토큰을 프론트에 보냄 (jwt 토큰은, 문자열임)
+    res.status(200).json(userToken);
+  } catch (error) {
+    next(error);
+  }
+});
 
 
 
 
-// //로그인
-// export async function login(userInfo) {
-//     const { user_id, pw } = userInfo;
-//     const key = process.env.SECRET_KEY;
-//     // id확인
-//     const userById = await userModel.findByUser(user_id);
-//     if (!userById) {
-//       throw new CustomError(statusCode.NOT_FOUND, responseMessage.NO_USER);
-//     }
-//     //정보 확인
-//     const pwHashed = userById.pw;
-//     const isPasswordCorrect = await bcrypt.compare(pw, pwHashed);
-//     if (!isPasswordCorrect) {
-//       throw new CustomError(statusCode.BAD_REQUEST, responseMessage.MISS_MATCH);
-//     }
-//     // 토큰
-//     const user_idx = userById.id;
-//     const token = jwt.sign(
-//       {
-//         id,
-//         user_id,
-//       },
-//       key,
-//       { expiresIn: '2d' }
-//     ); //payload, secret-key, expiresin
-//     return { id, token };
-//   }
-  
 
-
-// // 회원 본인 정보 조회
+// //회원 본인 정보 조회
 // userRouter.get("/user", loginRequired, async function (req, res, next) {
 //   try {
 //     const Id = req.currentUserId;
@@ -164,23 +133,23 @@ userRouter.post("/register", async (req, res, next) => {
 
 
 
-// //회원탈퇴
-// userRouter.delete(
-//   "/delete/:id",
-//   loginRequired,
-//   async function (req, res, next) {
-//     try {
-//       // params로부터 id를 가져옴
-//       const Id = req.params.Id;
+//회원탈퇴
+userRouter.delete(
+  "/delete/:id",
+  /*loginRequired,*/
+  async function (req, res, next) {
+    try {
+      // params로부터 id를 가져옴
+      const id = req.params._id;
 
-//       const deleteResult = await userService.deleteUserData(Id);
+      const deleteResult = await userService.userService.deleteUserData(id);
 
-//       res.status(200).json(deleteResult);
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+      res.status(200).json(deleteResult);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 
 module.exports = userRouter;

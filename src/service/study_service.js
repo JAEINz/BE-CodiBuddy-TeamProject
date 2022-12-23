@@ -1,11 +1,12 @@
-const { User } = require("../db");
-const { Study, Recruit, Like } = require("../db/models");
+const { User, Tag } = require("../db");
+const { Study, Recruit, Like, Study_tag } = require("../db/models");
 const dayjs = require("dayjs");
 const { Op } = require("sequelize");
 
 class StudyService {
-  constructor(study_model, recruit_model, like_model) {
+  constructor(study_model, recruit_model, like_model, study_tag_model) {
     this.Study = study_model;
+    this.StudyTag = study_tag_model;
     this.Recruit = recruit_model;
     this.Like = like_model;
   }
@@ -22,23 +23,42 @@ class StudyService {
     return createStudy;
   }
 
-  async getAllStudy() {
-    const findAllStudy = await this.Study.findAll({
-        where:{
-            id:2
-        }
+  async getAllStudy(queryString) {
+    console.log(queryString);
+    const query = {};
+    if (queryString.tag) {
+      query.tag_id = queryString.tag.split(",").map((e) => Number(e));
+    }
+    console.log(query);
+    const findAllStudy = await this.StudyTag.findAll({
+      where: query,
+      attributes: [],
+      include: [
+        {
+          model: this.Study,
+          include:{
+            attributes:['tag_id'],
+            model: this.StudyTag,
+            include:{
+              model:Tag
+            }
+          }
+        },
+      ],
     });
 
     return findAllStudy;
   }
 
-  //코치님 이부분입니드아!!
   //모임 상세보기 (아이디로 하나만 불러오기 - 포스트맨에서 확인 안됨)
   async getStudyDetail(studyId) {
     const getOneStudy = await this.Study.findOne({
       where: {
         id: Number(studyId),
-      }
+      },
+      include: {
+        model: this.Study_tag,
+      },
     });
     console.log(getOneStudy);
     return getOneStudy;
@@ -98,6 +118,9 @@ class StudyService {
               [Op.gte]: now.format("YYYY-MM-DD"),
             },
           },
+          include: {
+            model: Study_tag,
+          },
         },
       ],
     });
@@ -137,6 +160,6 @@ class StudyService {
   }
 }
 
-const studyService = new StudyService(Study, Recruit, Like);
+// const studyService = new StudyService(Study, Recruit, Like, Study_tag);
 
-module.exports = { studyService };
+module.exports = new StudyService(Study, Recruit, Like, Study_tag);

@@ -26,6 +26,8 @@ module.exports = class Tag extends Sequelize.Model {
 
   static associate(db){
     db.Tag.hasMany(db.User_tag, { foreignKey: 'tag_id', sourceKey: 'id'});
+    db.User_tag.belongsTo(db.Tag);
     db.Tag.hasMany(db.Study_tag, { foreignKey: 'tag_id', sourceKey: 'id'});
+    db.Study_tag.belongsTo(db.Tag);
   }
 };

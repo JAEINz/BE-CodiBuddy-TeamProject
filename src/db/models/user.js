@@ -41,7 +41,7 @@ module.exports = class User extends Sequelize.Model {
       underscored: true, //스네이크케이스로 이름변경
       modelName: 'User',
       tableName: 'users',
-      paranoid: false, //삭제시 완전삭제x -> 로그남김
+      paranoid: true, //삭제시 완전삭제x -> 로그남김
       charset: 'utf8',
       collate: 'utf8_general_ci',
     });
@@ -57,4 +57,6 @@ module.exports = class User extends Sequelize.Model {
     db.User.hasMany(db.Comment, { foreignKey: 'user_id', sourceKey: 'id'});
     db.Comment.belongsTo(db.Comment);
   }
+  
 };
+
