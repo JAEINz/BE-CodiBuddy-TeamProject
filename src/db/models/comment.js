@@ -4,15 +4,21 @@ module.exports = class Comment extends Sequelize.Model {
   static init(sequelize) {
     return super.init(
       {
+        id:{
+          type: Sequelize.INTEGER,
+          allowNull:false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
         study_id: {
           type: Sequelize.INTEGER,
-          allowNull: false,
           primaryKey: true,
+          allowNull:false,
         },
         user_id: {
           type: Sequelize.INTEGER,
-          allowNull: false,
           primaryKey: true,
+          allowNull:false,
         },
         commentary: {
           type: Sequelize.TEXT("tiny"),

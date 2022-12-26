@@ -1,14 +1,13 @@
-//import { User } from "../db/models";
-//import bcrypt from "bcrypt";
-//import jwt from "jsonwebtoken";
-const { User } = require("../db/models");
+//const { Tag } = require("../db");
+const { User, Tag } = require("../db/models");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 
 class UserService {
   // 본 파일의 맨 아래에서, new UserService(userModel) 하면, 이 함수의 인자로 전달됨
-  constructor(user_model) {
+  constructor(user_model, study_tag_model) {
     this.User = user_model;
+    this.StudyTah = study_tag_model;
   }
 
   // 회원가입
@@ -69,17 +68,15 @@ class UserService {
     const users = await this.User.findOne({
       where: { user_id },
     }); 
-  //   if (!users) {
-  //     throw new Error(
-  //       "가입되지 않은 아이디 입니다."
-  //     );
-  //   }
+    if (!users) {
+      throw new Error(
+        "가입되지 않은 아이디 입니다."
+      );
+    }
 
-  //   // 비밀번호 일치 여부 확인
-  //   // const password = await this.User.findOne({ User: pw });
+  //비밀번호 일치 여부 확인
     const correctPasswordHash = users.pw; // db에 저장되어 있는 암호화된 비밀번호
-
-  //   // 매개변수의 순서 중요 (1번째는 프론트가 보내온 비밀번호, 2번쨰는 db에 있던 암호화된 비밀번호)
+  //매개변수의 순서 중요 (1번째는 프론트가 보내온 비밀번호, 2번쨰는 db에 있던 암호화된 비밀번호)
     const isPasswordCorrect = await bcrypt.compare(
       pw,
       correctPasswordHash
@@ -102,59 +99,70 @@ class UserService {
     return { token };
   }
 
-  // //특정 사용자 정보 조회
-  // async getUserData(usersInfo) {
-  //   const { user_id, pw, nickname, email, introduce, profile_image } = usersInfo;
-  //   const users = await this.User.findOne({
-  //     where: { user_id, pw, nickname, email, introduce, profile_image  },
-  //   }); 
 
-  //   // db에서 찾지 못한 경우, 에러 메시지 반환
-  //   if (!users) {
-  //     throw new Error("가입 내역이 없습니다. 다시 한 번 확인해 주세요.");
-  //   }
 
-  //   return users;
-  // }
 
-  // // 사용자 목록을 받음.
+
+
+  //특정 사용자 정보 조회
+  async getUserData(id) {
+    const getOneStudy = await this.User.findAll({
+      where: { id },
+      //  include: {
+      //   model: this.Tag,
+      // },
+    });
+    // db에서 찾지 못한 경우, 에러 메시지 반환
+    if (!getOneStudy) {
+      throw new Error("가입 내역이 없습니다. 다시 한 번 확인해 주세요.");
+    }
+
+    return getOneStudy;
+  }
+
+
+
+
+  // //사용자 목록을 받음.
   // async getUsers() {
   //   const users = await this.User.findAll();
   //   return users;
-  // }
+  //}
 
-  // // 유저정보 수정, 현재 비밀번호가 있어야 수정 가능함.
-  // async setUser(userInfoRequired, toUpdate) {
-  //   // 객체 destructuring
-  //   try {
-  //     const { id, currentPassword } = userInfoRequired;
 
-  //     const user = await this.User.update({
-  //       id,
-  //       update: toUpdate,
-  //     });
 
-  //     return user;
-  //   } catch (err) {
-  //     console.log("err", err);
-  //   }
-  // }
+  //실패.........
+  // 유저정보 수정, 현재 비밀번호가 있어야 수정 가능함.
+  async setUser(/*userInfoRequired,*/ toUpdate) {
+    // 객체 destructuring
+    try {
+     //const { id, /*currentPassword*/ } = userInfoRequired;
 
-//   // 관리자 - 전체 유저 목록 불러오기
-//   async getUserData(userId) {
-//     const user = await this.User.findById(userId);
 
-//     // db에서 찾지 못한 경우, 에러 메시지 반환
-//     if (!user) {
-//       throw new Error("가입 내역이 없습니다. 다시 한 번 확인해 주세요.");
-//     }
-//     return user;
-//   }
+      const user = await this.User.update({ 
+        // 첫 번째 인수: 수정할 내용
+  comment: toUpdate,
+}, {
+  where: { users: User._id }, 
+});
+
+      return user;
+    } catch (err) {
+      console.log("err", err);
+    }
+  }
+
+
+
+
+
 
   //특정 유저 삭제
   async deleteUserData(id) {
     const deletedCount = await this.User.destroy({
-      where: { id: 4},
+      where: {
+        id: String(id),
+      },
     }); 
 
     // 삭제에 실패한 경우, 에러 메시지 반환
@@ -166,7 +174,7 @@ class UserService {
 }
 
 
-const userService = new UserService(User);
+
 
 //export { userService };
-module.exports = { userService };
+module.exports = new UserService(User);

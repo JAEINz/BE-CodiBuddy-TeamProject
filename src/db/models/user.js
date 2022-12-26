@@ -3,6 +3,12 @@ const Sequelize = require('sequelize');
 module.exports = class User extends Sequelize.Model {
   static init(sequelize) {
     return super.init({
+      id:{
+        type: Sequelize.INTEGER,
+        allowNull:false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       user_id: {
         type: Sequelize.STRING(16),
         allowNull: false,
@@ -41,7 +47,7 @@ module.exports = class User extends Sequelize.Model {
       underscored: true, //스네이크케이스로 이름변경
       modelName: 'User',
       tableName: 'users',
-      paranoid: true, //삭제시 완전삭제x -> 로그남김
+      paranoid: false, //삭제시 완전삭제x -> 로그남김
       charset: 'utf8',
       collate: 'utf8_general_ci',
     });
@@ -49,13 +55,13 @@ module.exports = class User extends Sequelize.Model {
 
   static associate(db){
     db.User.hasMany(db.User_tag, { foreignKey: 'user_id', sourceKey: 'id'});
-    db.User_tag.belongsTo(db.User);
+    db.User_tag.belongsTo(db.User,{onDelete:'cascade'});
     db.User.hasMany(db.Like, { foreignKey: 'user_id', sourceKey: 'id'});
-    db.Like.belongsTo(db.User);
+    db.Like.belongsTo(db.User,{onDelete:'cascade'});
     db.User.hasMany(db.Recruit, { foreignKey: 'user_id', sourceKey: 'id'});
-    db.Recruit.belongsTo(db.User);
+    db.Recruit.belongsTo(db.User,{onDelete:'cascade'});
     db.User.hasMany(db.Comment, { foreignKey: 'user_id', sourceKey: 'id'});
-    db.Comment.belongsTo(db.Comment);
+    db.Comment.belongsTo(db.User);
   }
   
 };

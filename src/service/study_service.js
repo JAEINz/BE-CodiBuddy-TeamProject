@@ -11,14 +11,17 @@ class StudyService {
     this.Like = like_model;
   }
 
-  async addStudy(studyData) {
+  async addStudy(userId,studyData) {
     const startPoint = dayjs(studyData.start_at).format("YYYY-MM-DD");
     const duration = Number(studyData.end_at);
     studyData.end_at = dayjs(startPoint)
       .add(duration, "M")
       .format("YYYY-MM-DD");
-
-    const createStudy = await this.Study.create(studyData);
+    const finalData = {
+      ...studyData,
+      author: userId
+    }
+    const createStudy = await this.Study.create(finalData);
 
     return createStudy;
   }
@@ -30,21 +33,15 @@ class StudyService {
       query.tag_id = queryString.tag.split(",").map((e) => Number(e));
     }
     console.log(query);
-    const findAllStudy = await this.StudyTag.findAll({
+    const findAllStudy = await this.Study.findAll({
       where: query,
-      attributes: [],
-      include: [
-        {
-          model: this.Study,
-          include:{
-            attributes:['tag_id'],
-            model: this.StudyTag,
-            include:{
-              model:Tag
-            }
-          }
-        },
-      ],
+      include:{
+        model: this.StudyTag,
+        attributes:['tag_id'],
+        include:{
+          model:Tag
+        }
+      },
     });
 
     return findAllStudy;
@@ -57,30 +54,48 @@ class StudyService {
         id: Number(studyId),
       },
       include: {
-        model: this.Study_tag,
+        attributes:['tag_id'],
+        model: this.StudyTag,
+        include:{
+          model: Tag,
+        }
       },
     });
-    console.log(getOneStudy);
+
     return getOneStudy;
   }
 
-  //태그별 스터디
-  async getStudyFromTag(tagId) {
-    const findStudyTag = await this.Study_tag.findAll({
-      where: {
-        tag_id: tagId,
-      },
-    });
-    const findTagStudy = await findStudyTag.getStudy();
+  //찜한 스터디
 
-    return findTagStudy;
+  async getStudyByLike(userId){
+    const studyByLike = this.Study.findAll({
+      include:[
+        {
+          model:this.Like,
+          attributes:[],
+          where:{
+            user_id:Number(userId)
+          }
+        },
+        {
+          atrributes:['tag_id'],
+          model: this.StudyTag,
+          include:{
+            model:Tag
+          }
+        }
+      ]
+    })
+
+    return studyByLike;
   }
 
   //모임 삭제
-  async deleteMyStudy(studyId) {
+  async deleteMyStudy(studyId,userId) {
     this.Study.destroy({
       where: {
         id: Number(studyId),
+        author:Number(userId)
       },
     });
   }
@@ -88,14 +103,27 @@ class StudyService {
   //수정 필요함!!
   //내 모임 수정
   async patchMyStudy(userId, studyId, updateData) {
-    const updateStudy = this.Study.update(updateData, {
-      where: {
-        user_id: userId,
-        study_id: studyId,
+    const myStudyList = await this.Recruit.findAll({
+      where:{
+        user_id:userId,
+        study_id:studyId
       },
-    });
-
-    return updateStudy;
+      attributes:['study_id']
+    })
+    if(myStudyList){
+      const updateStudy = await this.Study.update(updateData.Study, {
+        where: {
+          id: Number(studyId),
+        },
+      });
+      const updateStudyTag = await this.StudyTag.update(updateData.tag,{
+        where: {
+          study_id:Number(studyId),
+        }
+      })
+  
+      return updateStudy, updateStudyTag;
+    }
   }
 
   //참가중인 스터디
@@ -120,6 +148,10 @@ class StudyService {
           },
           include: {
             model: Study_tag,
+            attributes:['tag_id'],
+            include:{
+              model: Tag,
+            }
           },
         },
       ],
@@ -150,6 +182,12 @@ class StudyService {
             end_at: {
               [Op.lt]: now.format("YYYY-MM-DD"),
             },
+          },include: {
+            model: Study_tag,
+            attributes:['tag_id'],
+            include:{
+              model: Tag,
+            }
           },
         },
       ],

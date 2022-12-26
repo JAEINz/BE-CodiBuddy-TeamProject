@@ -3,6 +3,25 @@ const Sequelize = require('sequelize');
 module.exports = class User extends Sequelize.Model {
   static init(sequelize) {
     return super.init({
+      id:{
+        type: Sequelize.INTEGER,
+        allowNull:false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      author: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      head_count: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      limit_head_count: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       start_at: {
         type: Sequelize.DATEONLY,
         allowNull: false,
@@ -51,13 +70,15 @@ module.exports = class User extends Sequelize.Model {
 
   static associate(db){
     db.Study.hasMany(db.Study_tag, { foreignKey: 'study_id', sourceKey: 'id'});
-    db.Study_tag.belongsTo(db.Study)
+    db.Study_tag.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Like, { foreignKey: 'study_id', sourceKey: 'id'});
-    db.Like.belongsTo(db.Study)
+    db.Like.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Recruit, { foreignKey: 'study_id', sourceKey: 'id'});
-    db.Recruit.belongsTo(db.Study)
+    db.Recruit.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Comment, { foreignKey: 'study_id', sourceKey: 'id'});
-    db.Comment.belongsTo(db.Comment)
+    db.Comment.belongsTo(db.Study,{onDelete:'cascade'})
+    db.Study.hasOne(db.User, { foreignKey: 'author', sourceKey: 'id'});
+    db.User.belongsTo(db.Study)
   }
 
 };

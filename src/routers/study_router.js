@@ -1,21 +1,21 @@
 const express = require("express");
+const { loginRequired } = require("../middlewares/login_required");
 const studyRouter = express.Router();
 
 const { studyService, recruitService, studyTagService } = require("../service");
 
+
 //스터디 생성 (완료)<recruit, study, study_tag 생성>
-studyRouter.post("/", async (req, res, next) => {
+studyRouter.post("/", loginRequired, async (req, res, next) => {
   try {
-    const userId = 1;
+    const userId = req.userId;
     const studyData = req.body.study;
     const tag = req.body.tag;
-    const newStudy = await studyService.addStudy(studyData);
+    const newStudy = await studyService.addStudy(userId,studyData);
     const studyId = newStudy.dataValues.id;
-    await recruitService.addRecruit(userId, studyId);
     await studyTagService.addStudyTag(tag, studyId);
-    const studyTag = await studyTagService.getFromStudy(studyId)
 
-    res.status(201).json({"study":newStudy,studyTag});
+    res.status(201).json({'studyId':studyId});
   } catch (error) {
     next(error);
   }
@@ -33,10 +33,9 @@ studyRouter.get("/", async (req, res, next) => {
 
 //참가중인 스터디 (완료)
 // studyRouter.get("/mystudy", loginRequired, async (req,res,next)=> {
-studyRouter.get("/mystudy/attend", async (req, res, next) => {
+studyRouter.get("/mystudy/attend", loginRequired, async (req, res, next) => {
   try {
-    // const userId = req.currentUserId;
-    const userId = 1;
+    const userId = req.userId;
     const myAttendingStudyList =
       await studyService.getMyAttendingStudy(userId);
     res.status(200).json(myAttendingStudyList);
@@ -46,10 +45,9 @@ studyRouter.get("/mystudy/attend", async (req, res, next) => {
 });
 
 //만료된 스터디 (완료)
-studyRouter.get("/mystudy/expire", async (req, res, next) => {
+studyRouter.get("/mystudy/expire", loginRequired, async (req, res, next) => {
   try {
-    // const userId = req.currentUserId;
-    const userId = 1;
+    const userId = req.userId;
     const myExpiredStudyList =
       await studyService.getMyExpiredStudy(userId);
     res.status(200).json(myExpiredStudyList);
@@ -58,20 +56,9 @@ studyRouter.get("/mystudy/expire", async (req, res, next) => {
   }
 });
 
-//태그별 스터디 불러오기 (태그리스트를 어떻게 불러올까요!)
-studyRouter.get("/tag", async (req, res, next) => {
-  try {
-    const tag = []
-    const tagForStudy = await studyService.getStudyFromTag(tag);
-    res.status(200).json(tagForStudy);
-  } catch (error) {
-    next(error);
-  }
-});
 
-
-//스터디 상세 보기
-studyRouter.get("/:study_id", async (req, res, next) => {
+//스터디 하나만 가져오기
+studyRouter.get("/:study_id",  async (req, res, next) => {
   try {
     const studyId = req.params.study_id;
     const studyDetail = await studyService.getStudyDetail(studyId);
@@ -81,10 +68,21 @@ studyRouter.get("/:study_id", async (req, res, next) => {
   }
 });
 
+//찜한 스터디 가져오기 (완료)
+studyRouter.get("/mystudy/like", loginRequired, async (req,res,next)=>{
+    try{
+        const userId = req.userId;
+        const studyByLike = await studyService.getStudyByLike(userId);
+        res.status(200).json(studyByLike)
+    }catch(error){
+        next(error)
+    }
+})
+
 //내 스터디 수정
-studyRouter.patch("/:study_id", async (req, res, next) => {
+studyRouter.patch("/:study_id", loginRequired, async (req, res, next) => {
   try {
-    const userId = req.currentUserId;
+    const userId = req.userId;
     const studyId = req.params.study_id;
     const updateData = req.body;
     const updateStudy = await studyService.patchMyStudy(
@@ -98,17 +96,15 @@ studyRouter.patch("/:study_id", async (req, res, next) => {
   }
 });
 
-//내 스터디 삭제 (완료)
-studyRouter.delete("/:study_id", async (req, res, next) => {
+//스터디 삭제 (완료)
+studyRouter.delete("/:study_id", loginRequired, async (req, res, next) => {
   try {
-    // const userId = req.currentUserId;
-    const userId = 1;
+    const userId = req.userId;
     const studyId = req.params.study_id;
-    //리쿠르트 삭제
-    await recruitService.deleteMyRecruit(userId, studyId);
-    const deleteStudy = await studyService.deleteMyStudy(studyId);
 
-    res.status(200).json(deleteStudy);
+    await studyService.deleteMyStudy(studyId,userId);
+
+    res.status(200).json();
   } catch (error) {
     next(error);
   }

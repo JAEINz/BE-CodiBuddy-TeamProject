@@ -3,6 +3,12 @@ const Sequelize = require('sequelize');
 module.exports = class User_tag extends Sequelize.Model {
     static init(sequelize) {
       return super.init({
+        id:{
+          type: Sequelize.INTEGER,
+          allowNull:false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
         tag_id: {
             type: Sequelize.INTEGER,
             allowNull: false,
