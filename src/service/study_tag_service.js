@@ -1,5 +1,4 @@
-const { Study } = require("../db");
-const { Study_tag, Tag } = require("../db/models");
+const { StudyTag, Tag } = require("../db/models");
 
 class StudyTagService {
   constructor(StudyTag_model, Tag_model) {
@@ -7,7 +6,7 @@ class StudyTagService {
     this.Tag = Tag_model;
   }
 
-  //study_tag 생성
+  //StudyTag 생성
   async addStudyTag(tag, studyId) {
     const studyTags = await this.Tag.findAll({
       where: {
@@ -25,7 +24,7 @@ class StudyTagService {
       await this.StudyTag.create(a);
     });
   }
-  // study_tag 보기 (study id = studyId 인 태그 모두 가져오기)
+  // StudyTag 보기 (study id = studyId 인 태그 모두 가져오기)
   async getFromStudy(studyId) {
     const findFromStudy = this.StudyTag.findAll({
       where: {
@@ -36,7 +35,6 @@ class StudyTagService {
         model: Tag,
       },
     });
-    console.log("get 끝");
     return findFromStudy;
   }
 
@@ -65,4 +63,4 @@ class StudyTagService {
   }
 }
 
-module.exports = new StudyTagService(Study_tag, Tag);
+module.exports = new StudyTagService(StudyTag, Tag);

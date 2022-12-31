@@ -11,7 +11,7 @@ class RecruitService {
     //study 모집 인원수 체크 및 + 1
     try{
       const limitHeadCount = await this.Study.findOne({
-        attributes:['limit_head_count'],
+        attributes:['limit_head_count','head_count'],
         where:{
           id:studyId
         }
@@ -40,7 +40,10 @@ class RecruitService {
         });
         return createRecruit;
       }else{
-        return updateHeadCount
+        if(limitHeadCount.limit_head_count == limitHeadCount.head_count){
+          return 406
+        }
+        return 405
       }
   }catch(err){
       console.log(err)
@@ -78,7 +81,7 @@ class RecruitService {
   }
   //내 모임 삭제하기
   async deleteMyRecruit(userId, studyId) {
-    const deleteRecruit = this.Recruit.destroy({
+    const deleteRecruit = await this.Recruit.destroy({
       where: {
         user_id: Number(userId),
         study_id: Number(studyId),
@@ -94,18 +97,23 @@ class RecruitService {
     }
     if(qeryString.user){
       const userIds = qeryString.user.split(',')
+      const payBackUsers = []
       for(let i=0;i<userIds.length;i++){
-        await this.Recruit.update(data,{
+        payBackUsers.push(await this.Recruit.update(data,{
           where:{
             ...condition,
             user_id:Number(userIds[i])
           }
-        });
+        }))
       }
+      return payBackUsers;
+    
     }else{
-      await this.Recruit.update(data,{
+      const payBackUsers = await this.Recruit.update(data,{
         where:condition
       });
+
+      return payBackUsers
     }
   }
 }

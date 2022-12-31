@@ -5,5 +5,7 @@ const studyTagService = require("./study_tag_service");
 const likeService = require("./like_service");
 const commentService = require("./comment_service");
 const tagService = require("./tag_service");
+const userTagService = require("./user_tag_service");
+const userRefreshTokenService = require("./user_refresh_token_service");
 
-module.exports = { studyService, userService, recruitService, studyTagService, likeService, commentService, tagService };
+module.exports = { studyService, userService, recruitService, studyTagService, likeService, commentService, tagService, userTagService, userRefreshTokenService };

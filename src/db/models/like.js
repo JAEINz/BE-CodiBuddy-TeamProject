@@ -11,11 +11,9 @@ module.exports = class Like extends Sequelize.Model {
         },
         user_id: {
             type: Sequelize.INTEGER,
-            primaryKey: true
         },
         study_id: {
             type: Sequelize.INTEGER,
-            primaryKey: true
         },
       }, {
       sequelize,

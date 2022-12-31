@@ -6,9 +6,15 @@ class LikeService {
   }
 
   async addLike(userId, studyId){
-    const createLike = await this.Like.create({
+    const createLike = await this.Like.findOrCreate({
+      where:{
         user_id: userId,
         study_id: studyId
+      },
+      defaults:{
+        user_id:userId,
+        study_id:studyId
+      }
     })
     return createLike;
   }

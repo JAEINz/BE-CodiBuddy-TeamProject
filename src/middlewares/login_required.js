@@ -1,7 +1,9 @@
 const jwt = require("jsonwebtoken");
+require('dotenv').config();
 
 function loginRequired(req, res, next) {
   // const token = req.headers.authorization;
+  //header에 토큰의 typ과 alg(해싱 알고리즘)이 지정돼있다.
   const token = req.headers["authorization"]?.split(" ")[1];
   if (!token || token === 'null') {
     console.log('Authorization 토큰: 없음');
@@ -15,8 +17,8 @@ function loginRequired(req, res, next) {
 
   // 해당 token 이 정상적인 token인지 확인
   try {
-    const secretKey = process.env.JWT_SECRET_KEY || "secret-key"
-    console.log(secretKey)
+    const secretKey = process.env.JWT_SECRET_KEY
+
     const jwtDecoded = jwt.verify(token, secretKey);
 
     // const { userId, status } = jwtDecoded;

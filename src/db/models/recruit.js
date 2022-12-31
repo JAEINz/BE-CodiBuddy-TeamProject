@@ -11,11 +11,9 @@ module.exports = class Recruit extends Sequelize.Model {
         },
         user_id: {
             type: Sequelize.INTEGER,
-            primaryKey: true,
         },
         study_id: {
             type: Sequelize.INTEGER,
-            primaryKey: true,
         },
         payment_status: {
             type: Sequelize.ENUM('예정','승인','거절','완료'),

@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 
-module.exports = class User extends Sequelize.Model {
+module.exports = class Study extends Sequelize.Model {
   static init(sequelize) {
     return super.init({
       id:{
@@ -8,6 +8,11 @@ module.exports = class User extends Sequelize.Model {
         allowNull:false,
         primaryKey: true,
         autoIncrement: true,
+      },
+      visit_count: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
       },
       author: {
         type: Sequelize.INTEGER,
@@ -69,16 +74,16 @@ module.exports = class User extends Sequelize.Model {
   }
 
   static associate(db){
-    db.Study.hasMany(db.Study_tag, { foreignKey: 'study_id', sourceKey: 'id'});
-    db.Study_tag.belongsTo(db.Study,{onDelete:'cascade'})
+    db.Study.hasMany(db.StudyTag, { foreignKey: 'study_id', sourceKey: 'id'});
+    db.StudyTag.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Like, { foreignKey: 'study_id', sourceKey: 'id'});
     db.Like.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Recruit, { foreignKey: 'study_id', sourceKey: 'id'});
     db.Recruit.belongsTo(db.Study,{onDelete:'cascade'})
     db.Study.hasMany(db.Comment, { foreignKey: 'study_id', sourceKey: 'id'});
     db.Comment.belongsTo(db.Study,{onDelete:'cascade'})
-    db.Study.hasOne(db.User, { foreignKey: 'author', sourceKey: 'id'});
-    db.User.belongsTo(db.Study)
+    
+    // db.User.belongsTo(db.Study)
   }
 
 };

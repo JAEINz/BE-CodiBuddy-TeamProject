@@ -1,4 +1,3 @@
-//html에 추가: <script src="https://sdk.amazonaws.com/js/aws-sdk-2.410.0.min.js"></script>
 
 // aws-s3 사이트에서의 설정값들
 const s3BucketName = "codibuddy";

@@ -1,13 +1,14 @@
-//const { Tag } = require("../db");
-const { User, Tag } = require("../db/models");
+const { User,Tag } = require("../db");
+const { UserTag } = require("../db/models");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 
+
 class UserService {
   // 본 파일의 맨 아래에서, new UserService(userModel) 하면, 이 함수의 인자로 전달됨
-  constructor(user_model, study_tag_model) {
+  constructor(user_model, user_tag_model) {
     this.User = user_model;
-    this.StudyTah = study_tag_model;
+    this.UserTag = user_tag_model;
   }
 
   // 회원가입
@@ -54,10 +55,6 @@ class UserService {
 
 
 
-
-
-
-
   // // 로그인
   async getUserToken(loginInfo) {
   //   // 객체 destructuring
@@ -89,14 +86,15 @@ class UserService {
     }
 
   //   // 로그인 성공 -> JWT 웹 토큰 생성
-    const secretKey = process.env.JWT_SECRET_KEY || "secret-key";
-    console.log(users.dataValues.user_id, secretKey)
-  //   // 2개 프로퍼티를 jwt 토큰에 담음
-    const token = jwt.sign({ userId: users.dataValues.id }, secretKey);
+    const secretKey = process.env.JWT_SECRET_KEY
 
+  //   // 2개 프로퍼티를 jwt 토큰에 담음
+    const token = jwt.sign({ userId: users.dataValues.id, exp: Math.floor(Date.now()/1000)+(60 * 60 * 24) }, secretKey);
+    
+    
   //   //const isAdmin = user.role === "admin";
 
-    return { token };
+    return { token:token, userId: users.id };
   }
 
 
@@ -104,14 +102,21 @@ class UserService {
 
 
 
-  //특정 사용자 정보 조회
+  //마이페이지 조회
   async getUserData(id) {
     const getOneStudy = await this.User.findAll({
       where: { id },
-      //  include: {
-      //   model: this.Tag,
-      // },
+      include: [
+        {
+          atrributes: ["tag_id"],
+          model: this.UserTag,
+          include: {
+            model: Tag,
+          },
+        },
+      ],
     });
+
     // db에서 찾지 못한 경우, 에러 메시지 반환
     if (!getOneStudy) {
       throw new Error("가입 내역이 없습니다. 다시 한 번 확인해 주세요.");
@@ -132,42 +137,92 @@ class UserService {
 
 
  
-  // 유저정보 수정, 현재 비밀번호가 있어야 수정 가능함.
-  async setUser(/*userInfoRequired,*/ data, userId) {
-    // 객체 destructuring
-    try {
-     //const { id, /*currentPassword*/ } = userInfoRequired;
-
-
-      const user = await this.User.update({ 
-        // 첫 번째 인수: 수정할 내용
-  ...data,
-}, {
-  where: { id: userId }, 
-});
-
-      return user;
-    } catch (err) {
-      console.log("err", err);
+ // 유저정보 수정, 현재 비밀번호가 있어야 수정 가능함.
+ async setUser(userInfoRequired, updateData) {
+  // 객체 destructuring
+  try {
+    const { id, checkPassword } = userInfoRequired;
+    const user = await this.User.findOne({
+      where: { id: id },
+    });
+    if (!user) {
+      throw new Error("가입내역이 없습니다.");
     }
+    const hashedPassword = user.pw;
+    const isPasswordSame = await bcrypt.compare(
+      checkPassword,
+      hashedPassword
+    );
+
+    if (!isPasswordSame) {
+      throw new Error("현재 비밀번호가 일치하지 않습니다.");
+    }
+
+    const { pw } = updateData;
+    if (pw) {
+      const newHashedPassword = await bcrypt.hash(pw, 10);
+      updateData.pw = newHashedPassword;
+    }
+
+    const updateUserTag = await this.UserTag.update(updateData.Tag, {
+      where: {
+        user_id: user.id,
+      },})
+
+    const userchange = await this.User.update(updateData, {
+      where: { id: id },
+
+      
+    });
+
+    return [userchange == 1 || updateUserTag == 1];
+//return userchange
+
   }
+  catch (err) {
+    if(err=isPasswordSame){
+    console.log("현재 비밀번호가 일치하지 않습니다.", err);}
+  }
+}
 
 
 
+// 유저정보 수정, 현재 비밀번호가 있어야 수정 가능함.
+async setUserPoint(userInfoRequired, updateData) {
+  // 객체 destructuring
+  try {
+    const { id } = userInfoRequired;
+    const user = await this.User.findOne({
+      where: { id: id },
+    });
+    if (!user) {
+      throw new Error("가입내역이 없습니다.");
+    }
 
+    const userchange = await this.User.update(updateData, {
+      where: { id: id },
+      
+    });
+
+    return userchange
+//return userchange
+
+  }
+  catch (err) {
+    console.log("err", err);
+  }
+}
 
 
   //특정 유저 삭제
   async deleteUserData(id) {
     const deletedCount = await this.User.destroy({
-      where: {
-        id: String(id),
-      },
+      where: { id: id },
     }); 
 
     // 삭제에 실패한 경우, 에러 메시지 반환
-    if (deletedCount === 0) {
-      throw new Error(`${id} 사용자 데이터의 삭제에 실패하였습니다.`);
+    if (!deletedCount) {
+      throw new Error(`${id} 사용자 데이터 삭제에 실패하였습니다.`);
     }
     return { result: "success" };
   }
@@ -176,5 +231,4 @@ class UserService {
 
 
 
-//export { userService };
-module.exports = new UserService(User);
+module.exports = new UserService(User, UserTag);

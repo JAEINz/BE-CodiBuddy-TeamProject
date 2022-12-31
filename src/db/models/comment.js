@@ -12,12 +12,10 @@ module.exports = class Comment extends Sequelize.Model {
         },
         study_id: {
           type: Sequelize.INTEGER,
-          primaryKey: true,
           allowNull:false,
         },
         user_id: {
           type: Sequelize.INTEGER,
-          primaryKey: true,
           allowNull:false,
         },
         commentary: {

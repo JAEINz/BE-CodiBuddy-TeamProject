@@ -28,36 +28,38 @@ class CommentService {
 
   //코멘트 수정
   async updateComment(userId, commentId, updateComment) {
-    const updateMyComment = await this.Comment.update(
-      updateComment,
-      {
-        where: {
-          id: commentId,
-          user_id: userId,
-        },
-      });
+    const updateMyComment = await this.Comment.update(updateComment, {
+      where: {
+        id: commentId,
+        user_id: userId,
+      },
+    });
     return updateMyComment;
   }
 
   //스터디 댓글 보기
   async getComment(queryString, studyId) {
     const condition = {
+      include: {
+        model: User,
+        attributes: ["nickname", "profile_image"],
+      },
       where: {
         study_id: Number(studyId),
       },
+      order: [["createdAt", "DESC"],],
     };
     if (queryString.user) {
-      console.log("i have");
-      condition.include = {
-        model:User,
-        attributes:['nickname','profile_image'],
-        where:{
-          nickname : queryString.user,
-        }
+      condition.include.where = {
+        nickname: queryString.user,
       };
     }
-    const findComment = await this.Comment.findAll(condition);
-    return findComment;
+    try {
+      const findComment = await this.Comment.findAll(condition);
+      return findComment;
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
 
